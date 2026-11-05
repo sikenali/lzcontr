@@ -1,0 +1,22 @@
+# 依赖
+node_modules/
+
+# 构建产物（可重建）
+dist/
+release/
+
+# 本地运行时数据（JSON 文件，首次启动自动播种）
+server/data/
+
+# 本地验证/调试脚本与截图（非产品代码）
+scratch/
+
+# 内部设计文档
+docs/
+
+# 日志
+*.log
+
+# 系统
+.DS_Store
+Thumbs.db

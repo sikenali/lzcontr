@@ -1,0 +1,59 @@
+appId: com.lzcontr.app
+productName: LZContr
+copyright: © 2026 LZContr
+
+directories:
+  output: release
+  buildResources: build
+
+# 打包进应用的文件（生产依赖 express 的 node_modules 由 electron-builder 自动纳入）
+files:
+  - dist/**
+  - electron/**
+  - server/**
+  - package.json
+  - "!**/*.map"
+  - "!server/data/**"
+
+asar: true
+
+# ---------- Windows：单文件免安装 portable exe ----------
+win:
+  target:
+    - target: portable
+      arch: [x64]
+  artifactName: LZContr-${version}-win-${arch}.${ext}
+  # 单文件免安装：无需安装器，双击直接运行
+
+portable:
+  artifactName: LZContr-${version}-win-${arch}.${ext}
+
+# ---------- macOS：dmg（arm64 + x64，无 zip） ----------
+mac:
+  target:
+    - target: dmg
+      arch: [x64, arm64]
+  artifactName: LZContr-${version}-mac-${arch}.${ext}
+  category: public.app-category.business
+
+dmg:
+  artifactName: LZContr-${version}-mac-${arch}.${ext}
+
+# ---------- Linux：AppImage + deb（x64） ----------
+linux:
+  target:
+    - target: AppImage
+      arch: [x64]
+    - target: deb
+      arch: [x64]
+  artifactName: LZContr-${version}-linux-${arch}.${ext}
+  category: Office
+  synopsis: LZContr 合同生成器
+  description: LZContr 合同生成器 - 研发/销售合同与报价单条款填写与 Word 生成
+  maintainer: lzcontr
+
+appImage:
+  artifactName: LZContr-${version}-linux-${arch}.${ext}
+
+deb:
+  artifactName: LZContr-${version}-linux-${arch}.${ext}
