@@ -1,0 +1,20 @@
+package: cloud.lazycat.app.lzcontr
+version: 1.0.0
+name: 懒猫合同生成器
+description: 研发/销售合同与报价单条款填写与 Word 生成
+author: sikenali
+license: MIT
+homepage: https://github.com/sikenali/lzcontr
+min_os_version: 1.5.0
+unsupported_platforms:
+  - ios
+locales:
+  zh-CN:
+    name: 懒猫合同生成器
+    description: 研发/销售合同与报价单条款填写与 Word 生成
+  en:
+    name: LZContr
+    description: R&D/sales contract and quotation generator with Word export
+permissions:
+  required:
+    - net.internet

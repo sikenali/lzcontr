@@ -14,6 +14,10 @@ scratch/
 # 内部设计文档
 docs/
 
+# LazyCat 打包生成产物（_lpk_content 与 .lpk 为构建输出）
+lzc/_lpk_content/
+lzc/*.lpk
+
 # 日志
 *.log
 
