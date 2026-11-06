@@ -18,6 +18,9 @@ jobs:
   build:
     name: Build (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
+    # GITHUB_TOKEN 需 contents:write 才能创建/上传 GitHub Release
+    permissions:
+      contents: write
     strategy:
       fail-fast: false
       matrix:
