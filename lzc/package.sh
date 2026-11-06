@@ -22,9 +22,21 @@ echo "Packaging version: $LPK_VERSION"
 bash ./build.sh
 
 # 2. 调用 lzc-cli 生成 LPK
-CLI_BIN="/usr/local/lib/node_modules/@lazycatcloud/lzc-cli/scripts/cli.js"
+#    定位 cli.js：LZC_CLI 环境变量 > /usr/local 全局 > npm root -g 全局 > /tmp 兜底
+CLI_BIN="${LZC_CLI:-}"
+if [ -z "$CLI_BIN" ]; then
+  if [ -f "/usr/local/lib/node_modules/@lazycatcloud/lzc-cli/scripts/cli.js" ]; then
+    CLI_BIN="/usr/local/lib/node_modules/@lazycatcloud/lzc-cli/scripts/cli.js"
+  else
+    CLI_BIN="$(npm root -g 2>/dev/null)/@lazycatcloud/lzc-cli/scripts/cli.js"
+  fi
+fi
 if [ ! -f "$CLI_BIN" ]; then
   CLI_BIN="/tmp/package/scripts/cli.js"
+fi
+if [ ! -f "$CLI_BIN" ]; then
+  echo "ERROR: lzc-cli not found. Install with: npm install -g @lazycatcloud/lzc-cli"
+  exit 1
 fi
 echo "Using lzc-cli: $CLI_BIN"
 node "$CLI_BIN" project release -o output.lpk

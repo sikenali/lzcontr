@@ -1,0 +1,50 @@
+# ============================================================
+# LZContr LazyCat 云应用打包工作流
+# 产物：cloud.lazycat.app.lzcontr-<version>.lpk（约 3.3MB）
+# 触发：push v* 标签（构建并发布到对应 GitHub Release）或 手动 dispatch（仅产物）
+# ============================================================
+name: Build LazyCat LPK
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-lpk:
+    name: Build LazyCat LPK
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install lzc-cli
+        run: npm install -g @lazycatcloud/lzc-cli
+
+      - name: Build LPK
+        run: bash lzc/package.sh
+
+      - name: Upload LPK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lzcontr-lpk
+          path: lzc/*.lpk
+          if-no-files-found: error
+
+      - name: Publish to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: lzc/*.lpk
