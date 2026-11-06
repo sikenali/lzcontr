@@ -57,3 +57,10 @@ appImage:
 
 deb:
   artifactName: LZContr-${version}-linux-${arch}.${ext}
+
+# ---------- 发布：GitHub Releases（标签触发时上传到对应 tag 的 Release） ----------
+publish:
+  provider: github
+  owner: sikenali
+  repo: lzcontr
+  releaseType: release
