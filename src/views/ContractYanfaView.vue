@@ -84,8 +84,16 @@
           <div class="clause-list">
             <div v-for="(clause, i) in clauses" :key="i" class="clause-item">
               <div class="clause-title">
-                <span>{{ clause.title }}</span>
-                <button class="clause-edit" title="编辑">
+                <input
+                  v-if="editingClause === i"
+                  v-model="editingTitle"
+                  class="clause-title-input"
+                  @keyup.enter="commitClauseTitle(i)"
+                  @keyup.esc="editingClause = -1"
+                  @blur="commitClauseTitle(i)"
+                />
+                <span v-else>{{ clause.title || '（未命名条款）' }}</span>
+                <button class="clause-edit" title="编辑" @click="startEditTitle(i)">
                   <RiEditLine size="14" />
                 </button>
               </div>
@@ -140,7 +148,7 @@
                     合计 <span class="foot-note">（{{ milestones.length }} 个阶段）</span>
                   </td>
                   <td></td>
-                  <td><span class="total-amount">480,000.00 元</span></td>
+                  <td><span class="total-amount">{{ milestoneTotalText }} 元</span></td>
                   <td><span class="ratio">100%</span></td>
                 </tr>
               </tfoot>
@@ -165,7 +173,7 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue';
+import { ref, reactive, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import {
   RiAddLine,
@@ -193,6 +201,7 @@ const sections = ref([
   { name: '支付方式', active: false, selected: true },
   { name: '知识产权归属', active: false, selected: false },
 ]);
+const selectedCount = computed(() => sections.value.filter((s) => s.selected).length);
 
 const form = reactive(store.yanfa);
 
@@ -216,12 +225,35 @@ const milestones = ref([
   { stage: '质保金', deliverable: '验收满 12 个月支付', date: '2027-06-30', amount: '48,000', ratio: '10%' },
 ]);
 
+function parseNum(s) {
+  const m = String(s || '').match(/[\d,]+(\.\d+)?/);
+  return m ? parseFloat(m[0].replace(/,/g, '')) : 0;
+}
+const milestoneTotal = computed(() =>
+  milestones.value.reduce((sum, m) => sum + parseNum(m.amount), 0)
+);
+const milestoneTotalText = computed(() =>
+  milestoneTotal.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+);
+
 function addMilestone() {
   milestones.value.push({ stage: '', deliverable: '', date: '', amount: '', ratio: '' });
 }
 function onAddClause() {
   clauses.value.push({ title: '', text: '', placeholder: '请输入条款内容…' });
   ElMessage.success('已引用标准模板');
+}
+const editingClause = ref(-1);
+const editingTitle = ref('');
+function startEditTitle(i) {
+  editingClause.value = i;
+  editingTitle.value = clauses.value[i].title;
+}
+function commitClauseTitle(i) {
+  if (editingClause.value !== i) return;
+  const t = editingTitle.value.trim();
+  if (t) clauses.value[i].title = t;
+  editingClause.value = -1;
 }
 function validate() {
   let ok = true;
@@ -397,6 +429,23 @@ async function onNext() {
 }
 .clause-edit:hover {
   color: var(--color-primary);
+}
+.clause-title-input {
+  flex: 1;
+  min-width: 0;
+  height: 30px;
+  padding: 0 8px;
+  border: 0.7px solid var(--color-primary);
+  border-radius: 6px;
+  background: var(--color-bg-white);
+  color: var(--color-text-primary);
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+}
+.clause-title-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 15%, transparent);
 }
 .clause-area {
   width: 100%;

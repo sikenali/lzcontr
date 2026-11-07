@@ -46,21 +46,23 @@
             </div>
             <div>
               <div class="file-title">合同文件已生成</div>
-              <div class="file-sub">报价单_宁波智造装备制造_20260210.docx · 119.4 KB · 共 3 页</div>
+              <div class="file-sub">
+                {{ record?.filename || '报价单' }}{{ currentExt }} · {{ record?.sizeKB ?? '—' }} KB · 共 {{ record?.pages ?? '—' }} 页
+              </div>
             </div>
           </div>
           <div class="file-meta">
             <div class="meta-item">
               <span class="meta-label">文件格式</span>
-              <span class="meta-val fmt"><RiFile3Line size="15" /> Word 文档（.docx）</span>
+              <span class="meta-val fmt"><RiFile3Line size="15" /> {{ currentFormatName }}（{{ currentExt }}）</span>
             </div>
             <div class="meta-item">
               <span class="meta-label">生成时间</span>
-              <span class="meta-val">2026-02-10 14:26:08</span>
+              <span class="meta-val">{{ fmtTime(record?.createdAt) }}</span>
             </div>
             <div class="meta-item">
-              <span class="meta-label">引用模板</span>
-              <span class="meta-val">报价单标准模板 V2.1</span>
+              <span class="meta-label">版本号</span>
+              <span class="meta-val">{{ record?.version || 'V1.0' }}</span>
             </div>
             <div class="meta-item">
               <span class="meta-label">包含条款</span>
@@ -69,7 +71,7 @@
           </div>
           <div class="total-line">
             <span class="total-label">含税总计（人民币）</span>
-            <span class="total-val">¥777,440.00</span>
+            <span class="total-val">¥{{ record?.total || fmt(pvTotal) }}</span>
             <span class="checked-badge">
               <RiCheckboxCircleLine size="12" />
               已核对
@@ -97,18 +99,18 @@
         <section class="ui-card card">
           <div class="card-head">
             <span class="block-title">本次生成记录</span>
-            <span class="log-no">日志编号 LOG-20260210-0042</span>
+            <span class="log-no">日志编号 {{ record?.id || '—' }}</span>
           </div>
           <div class="log-list">
-            <div v-for="(log, i) in logs" :key="i" class="log-item">
-              <span class="log-icon" :class="{ pending: log.pending }">
-                <RiCheckLine v-if="!log.pending" size="13" />
+            <div v-for="(log, i) in displayLogs" :key="i" class="log-item">
+              <span class="log-icon" :class="{ pending: !log.ok }">
+                <RiCheckLine v-if="log.ok !== false" size="13" />
                 <span v-else class="spinner"></span>
               </span>
               <div class="log-info">
                 <div class="log-top">
                   <span class="log-title">{{ log.title }}</span>
-                  <span class="log-time">{{ log.time }}</span>
+                  <span class="log-time">{{ log.time || fmtTime(record?.createdAt) }}</span>
                 </div>
                 <div class="log-desc">{{ log.desc }}</div>
               </div>
@@ -168,9 +170,9 @@
             <span class="block-title">归档与校验</span>
           </div>
           <div class="archive-list">
-            <div class="ar-row"><span class="ar-label">归档路径</span><span class="ar-val">/ 合同库 / 报价单 / 2026</span></div>
-            <div class="ar-row"><span class="ar-label">合同编号</span><span class="ar-val">QT-2026-0210-018</span></div>
-            <div class="ar-row"><span class="ar-label">文件校验码</span><span class="ar-val">a3f1·9c72·4d08</span></div>
+            <div class="ar-row"><span class="ar-label">归档路径</span><span class="ar-val">{{ record?.archivePath || '—' }}</span></div>
+            <div class="ar-row"><span class="ar-label">合同编号</span><span class="ar-val">{{ record?.contractNo || '—' }}</span></div>
+            <div class="ar-row"><span class="ar-label">文件校验码</span><span class="ar-val">{{ record?.checksum || '—' }}</span></div>
             <div class="ar-row">
               <span class="ar-label">归档状态</span>
               <span class="archive-badge">
@@ -189,7 +191,7 @@
 
     <div class="bottom-tip">
       <RiFileShield2Line size="16" />
-      文件已归档至合同库，合同编号 QT-2026-0210-018；如需调整内容请返回对应标签页修改后重新生成，历史版本保留可追溯
+      文件已归档至合同库，合同编号 {{ record?.contractNo || '—' }}；如需调整内容请返回对应标签页修改后重新生成，历史版本保留可追溯
     </div>
   </div>
 
@@ -202,7 +204,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import {
   RiCheckLine,
@@ -224,6 +226,7 @@ import {
 import { ElMessage } from '../utils/toast';
 import { useGenerationStore } from '../stores/generation';
 import { useQuotationStore } from '../stores/quotation';
+import { generateService } from '../services/generateService';
 import DocPreviewModal from '../components/preview/DocPreviewModal.vue';
 
 const router = useRouter();
@@ -242,34 +245,54 @@ const pvSubtotal = computed(() => pvRows.value.reduce((s, r) => s + parseNum(r.a
 const pvTax = computed(() => pvSubtotal.value * 0.13);
 const pvTotal = computed(() => pvSubtotal.value + pvTax.value);
 const pvPages = computed(() => Math.max(1, Math.ceil(pvRows.value.length / 3)));
-const fmtNum = (n) => (Number(n) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmtNum = (n) => parseNum(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmt = (n) => (Number(n) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+// 生成记录：优先用当前 store，直刷/回退时从 API 取最新一条
+const latestRecord = ref(null);
+onMounted(async () => {
+  if (!genStore.record) {
+    try {
+      const res = await generateService.list();
+      const list = (res.data || []).slice().sort(
+        (a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
+      );
+      latestRecord.value = list[0] || null;
+    } catch (e) {
+      /* ignore */
+    }
+  }
+});
+const record = computed(() => genStore.record || latestRecord.value || null);
+const FORMAT_META = {
+  word: { name: 'Word 文档', ext: '.docx' },
+  pdf: { name: 'PDF 文档', ext: '.pdf' },
+  excel: { name: 'Excel 明细', ext: '.xlsx' },
+};
+const currentFormatName = computed(() => FORMAT_META[record.value?.format]?.name || 'Word 文档');
+const currentExt = computed(() => FORMAT_META[record.value?.format]?.ext || '.docx');
+const fmtTime = (iso) => {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (isNaN(d)) return iso;
+  const p = (x) => String(x).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+};
+const displayLogs = computed(() => {
+  const logs = record.value?.logs;
+  if (Array.isArray(logs) && logs.length) return logs;
+  return [
+    { title: 'Word 文件生成成功', desc: '文件已写入' + (record.value?.archivePath ? ' ' + record.value.archivePath : '归档目录'), ok: true },
+    { title: '条款与金额校验通过', desc: '条款版本一致，金额校验无差异', ok: true },
+    { title: '开始生成 Word 文件', desc: '使用模板「报价单标准模板 V2.1」', ok: true },
+  ];
+});
 
 const steps = [
   { num: 1, name: '选择合同类型', desc: '3 个标签已确认', done: true },
   { num: 2, name: '填写抬头信息', desc: '双方信息已完整', done: true },
   { num: 3, name: '明细与条款', desc: '3 项明细 · 30 条条款', done: true },
   { num: 4, name: '生成文件', desc: 'Word 文件已就绪', done: true },
-];
-
-const logs = [
-  {
-    title: 'Word 文件生成成功',
-    time: '14:26:08',
-    desc: '文件已写入 / 合同库 / 报价单 / 2026，可通过编号 QT-2026-0210-018 检索',
-    pending: false,
-  },
-  {
-    title: '条款与金额校验通过',
-    time: '14:26:05',
-    desc: '30 条条款版本一致，明细金额与小计、税额合计校验无差异',
-    pending: false,
-  },
-  {
-    title: '开始生成 Word 文件',
-    time: '14:26:02',
-    desc: '触发人：王经理 · 使用模板「报价单标准模板 V2.1」',
-    pending: false,
-  },
 ];
 
 function onDownload() {
@@ -295,7 +318,7 @@ function onBack() {
   router.push('/quotation/a');
 }
 function onLog() {
-  ElMessage.info('生成记录：LOG-20260210-0042');
+  ElMessage.info('生成记录：' + (record.value?.id || '—'));
 }
 function onFullscreen() {
   previewFullscreen.value = true;

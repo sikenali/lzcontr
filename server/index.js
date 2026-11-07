@@ -34,6 +34,11 @@ function createApp({ prod = false } = {}) {
 
   // ---------- 合同 ----------
   app.get('/api/contracts', wrap(async (req, res) => ok(res, read('contracts'))));
+  app.get('/api/contracts/:id', wrap(async (req, res) => {
+    const found = read('contracts').find((c) => c.id === req.params.id);
+    if (!found) return res.status(404).json({ success: false, code: 'NOT_FOUND', message: '合同不存在: ' + req.params.id });
+    ok(res, found);
+  }));
   app.post('/api/contracts', wrap(async (req, res) => {
     const d = req.body || {};
     if (d.type === 'xiaoshou') {
@@ -58,6 +63,11 @@ function createApp({ prod = false } = {}) {
 
   // ---------- 报价单 ----------
   app.get('/api/quotations', wrap(async (req, res) => ok(res, read('quotations'))));
+  app.get('/api/quotations/:id', wrap(async (req, res) => {
+    const found = read('quotations').find((q) => q.id === req.params.id);
+    if (!found) return res.status(404).json({ success: false, code: 'NOT_FOUND', message: '报价单不存在: ' + req.params.id });
+    ok(res, found);
+  }));
   app.post('/api/quotations', wrap(async (req, res) => {
     const d = req.body || {};
     requiredCheck(d, { layout: '布局', project: '项目名称', company: '报价公司', customer: '客户名称' });

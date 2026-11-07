@@ -104,7 +104,7 @@
                     合计（含税） <span class="foot-note">（{{ products.length }} 行明细）</span>
                   </td>
                   <td></td>
-                  <td><span class="total-amount">480,000.00 元</span></td>
+                  <td><span class="total-amount">{{ productTotalText }} 元</span></td>
                 </tr>
               </tfoot>
             </table>
@@ -125,8 +125,16 @@
           <div class="clause-list">
             <div v-for="(clause, i) in clauses" :key="i" class="clause-item">
               <div class="clause-title">
-                <span>{{ clause.title }}</span>
-                <button class="clause-edit" title="编辑">
+                <input
+                  v-if="editingClause === i"
+                  v-model="editingTitle"
+                  class="clause-title-input"
+                  @keyup.enter="commitClauseTitle(i)"
+                  @keyup.esc="editingClause = -1"
+                  @blur="commitClauseTitle(i)"
+                />
+                <span v-else>{{ clause.title || '（未命名条款）' }}</span>
+                <button class="clause-edit" title="编辑" @click="startEditTitle(i)">
                   <RiEditLine size="14" />
                 </button>
               </div>
@@ -214,12 +222,35 @@ const clauses = ref([
   },
 ]);
 
+function parseNum(s) {
+  const m = String(s || '').match(/[\d,]+(\.\d+)?/);
+  return m ? parseFloat(m[0].replace(/,/g, '')) : 0;
+}
+const productTotal = computed(() =>
+  products.value.reduce((sum, p) => sum + parseNum(p.total), 0)
+);
+const productTotalText = computed(() =>
+  productTotal.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+);
+
 function addProduct() {
   products.value.push({ name: '', spec: '', qty: '', price: '', total: '' });
 }
 function onAddClause() {
   clauses.value.push({ title: '', text: '', placeholder: '请输入条款内容…' });
   ElMessage.success('已引用标准模板');
+}
+const editingClause = ref(-1);
+const editingTitle = ref('');
+function startEditTitle(i) {
+  editingClause.value = i;
+  editingTitle.value = clauses.value[i].title;
+}
+function commitClauseTitle(i) {
+  if (editingClause.value !== i) return;
+  const t = editingTitle.value.trim();
+  if (t) clauses.value[i].title = t;
+  editingClause.value = -1;
 }
 function validate() {
   let ok = true;
@@ -420,6 +451,23 @@ async function onNext() {
 }
 .clause-edit:hover {
   color: var(--color-primary);
+}
+.clause-title-input {
+  flex: 1;
+  min-width: 0;
+  height: 30px;
+  padding: 0 8px;
+  border: 0.7px solid var(--color-primary);
+  border-radius: 6px;
+  background: var(--color-bg-white);
+  color: var(--color-text-primary);
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+}
+.clause-title-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 15%, transparent);
 }
 .clause-area {
   width: 100%;

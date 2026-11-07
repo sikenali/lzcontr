@@ -140,7 +140,7 @@
             <label class="form-label">文件名称 <span class="req">*</span></label>
             <div class="filename-wrap">
               <input v-model="filename" class="ui-input" :class="{ 'has-error': errors.filename }" />
-              <span class="ext-badge">.docx</span>
+              <span class="ext-badge">{{ currentFormat.ext }}</span>
             </div>
             <span v-if="errors.filename" class="err-msg">{{ errors.filename }}</span>
           </div>
@@ -190,19 +190,19 @@
             </div>
             <div class="sum-row">
               <span class="sum-label">报价公司</span>
-              <span class="sum-val">杭州懒猫云计算有限公司</span>
+              <span class="sum-val">{{ q.form.company || '—' }}</span>
             </div>
             <div class="sum-row">
               <span class="sum-label">客户名称</span>
-              <span class="sum-val">宁波智造装备制造有限公司</span>
+              <span class="sum-val">{{ q.form.customer || '—' }}</span>
             </div>
             <div class="sum-row">
               <span class="sum-label">项目名称</span>
-              <span class="sum-val">数据中心机房改造项目</span>
+              <span class="sum-val">{{ q.form.project || '—' }}</span>
             </div>
             <div class="sum-row">
               <span class="sum-label">明细项</span>
-              <span class="sum-val">3 项设备与服务</span>
+              <span class="sum-val">{{ pvCount }} 项设备与服务</span>
             </div>
             <div class="sum-row">
               <span class="sum-label">引用条款</span>
@@ -210,15 +210,15 @@
             </div>
             <div class="sum-row">
               <span class="sum-label">生成格式</span>
-              <span class="sum-val fmt">
-                <RiFile3Line size="15" />
-                Word（.docx）
+              <span class="sum-val fmt" :style="{ color: currentFormat.colorHex }">
+                <component :is="currentFormat.icon" size="15" />
+                {{ currentFormat.name }}（{{ currentFormat.ext }}）
               </span>
             </div>
           </div>
           <div class="total-block">
             <span class="total-label">含税总计</span>
-            <span class="total-val">¥777,440.00</span>
+            <span class="total-val">¥{{ fmt(pvTotal) }}</span>
           </div>
         </section>
 
@@ -260,9 +260,10 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue';
+import { ref, reactive, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import UiSelect from '../components/ui/UiSelect.vue';
+import { useQuotationStore } from '../stores/quotation';
 import {
   RiCheckLine,
   RiCheckboxCircleLine,
@@ -285,6 +286,19 @@ const router = useRouter();
 const errors = reactive({});
 const generating = ref(false);
 const genStore = useGenerationStore();
+const q = useQuotationStore();
+
+// 摘要：报价单真实数据
+function parseNum(s) {
+  const m = String(s || '').match(/[\d,]+(\.\d+)?/);
+  return m ? parseFloat(m[0].replace(/,/g, '')) : 0;
+}
+const pvRows = computed(() => (q.rows || []).filter((r) => r.name || r.spec || r.qty || r.price));
+const pvCount = computed(() => pvRows.value.length);
+const pvSubtotal = computed(() => pvRows.value.reduce((s, r) => s + parseNum(r.amount), 0));
+const pvTotal = computed(() => pvSubtotal.value * 1.13);
+const fmt = (n) => (Number(n) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const currentFormat = computed(() => formats.find((f) => f.key === selectedFormat.value) || formats[0]);
 
 const versionOptions = [
   { value: 'V1.0', label: 'V1.0' },
@@ -305,31 +319,34 @@ const steps = [
   { num: 4, name: '生成文件', desc: '选择格式并生成', done: false, active: true },
 ];
 
-const confirms = [
+const confirms = computed(() => [
   {
+    key: 'yanfa',
     title: '研发合同条款',
     desc: '12 条条款 · 引用模板「研发合作标准模板 T-01」',
     color: 'blue',
     icon: RiFileShield2Line,
   },
   {
+    key: 'xiaoshou',
     title: '销售合同条款',
     desc: '18 条条款 · 含付款、交付与违约责任条款',
     color: 'green',
     icon: RiFileListLine,
   },
   {
+    key: 'baojia',
     title: '报价单信息',
-    desc: '3 项明细 · 含税总计 ¥777,440.00 · 报价有效期 30 天',
+    desc: `${pvCount.value} 项明细 · 含税总计 ¥${fmt(pvTotal.value)} · 报价有效期 ${q.form.validity || '—'}`,
     color: 'red',
     icon: RiPriceTag3Line,
   },
-];
+]);
 
 const formats = [
-  { key: 'word', name: 'Word 文档', badge: '默认', desc: '.docx · 可在线编辑', icon: RiFile3Line, color: 'c-blue' },
-  { key: 'pdf', name: 'PDF 文档', desc: '.pdf · 适合对外发送', icon: RiFileTextLine, color: 'c-red' },
-  { key: 'excel', name: 'Excel 明细', desc: '.xlsx · 仅导出明细表', icon: RiFileExcel2Line, color: 'c-green' },
+  { key: 'word', name: 'Word 文档', badge: '默认', ext: '.docx', desc: '.docx · 可在线编辑', icon: RiFile3Line, color: 'c-blue', colorHex: 'var(--brand-blue)' },
+  { key: 'pdf', name: 'PDF 文档', ext: '.pdf', desc: '.pdf · 适合对外发送', icon: RiFileTextLine, color: 'c-red', colorHex: 'var(--brand-red)' },
+  { key: 'excel', name: 'Excel 明细', ext: '.xlsx', desc: '.xlsx · 仅导出明细表', icon: RiFileExcel2Line, color: 'c-green', colorHex: 'var(--brand-green)' },
 ];
 const selectedFormat = ref('word');
 const opts = ref({ header: true, pageNum: true, email: false });
@@ -344,7 +361,8 @@ function onBack() {
   router.push('/quotation/c');
 }
 function onView(item) {
-  ElMessage.info(`正在查看「${item.title}」`);
+  const routeMap = { yanfa: '/contract/yanfa', xiaoshou: '/contract/xiaoshou', baojia: '/quotation/a' };
+  router.push(routeMap[item.key] || '/quotation/a');
 }
 async function onGenerate() {
   if (!filename.value.trim()) {
