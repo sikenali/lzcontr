@@ -1,0 +1,29 @@
+# 依赖
+node_modules/
+
+# 构建产物（可重建）
+dist/
+release/
+
+# 本地运行时数据（JSON 文件，首次启动自动播种）
+server/data/
+
+# 本地验证/调试脚本与截图（非产品代码）
+scratch/
+
+# 内部设计文档
+docs/
+
+# LazyCat 打包生成产物（_lpk_content 与 .lpk 为构建输出）
+lzc/_lpk_content/
+lzc/*.lpk
+
+# 日志
+*.log
+
+# 系统
+.DS_Store
+Thumbs.db
+
+# 图标渲染中间产物（由 build/logo.svg 再生）
+icon-src/

@@ -1,0 +1,17 @@
+application:
+  subdomain: lzcontr
+  routes:
+    # 后端：exec 路由直接执行 bun 编译的自包含单文件（LazyCat 运行时无 Node 依赖）
+    - /api/=exec://8080,/lzcapp/pkg/content/backend/lzcontr
+    # 前端：lzcinit 静态服务（Vite dist）
+    - /=file:///lzcapp/pkg/content/frontend
+  environment:
+    # lzcontr server/index.js 读取：PORT 与 LZCONTR_DATA_DIR
+    PORT: "8080"
+    LZCONTR_DATA_DIR: /lzcapp/var/data
+    TZ: Asia/Shanghai
+  health_check:
+    # lzcontr 现有健康端点（非 lzmail 的 /api/v1/health）
+    test_url: http://127.0.0.1:8080/api/health
+    start_period: 40s
+    timeout: 10s

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- 背景：品牌红圆角方块（#C0392B，DESIGN-1 §1 主色） -->
+  <rect x="0" y="0" width="1024" height="1024" rx="240" fill="#C0392B"/>
+  <!-- 合同文档：白色描边圆角矩形，右上折角（合同特征） -->
+  <path d="M212 172 H520 L628 280 V548 Q628 604 572 604 H268 Q212 604 212 548 Z"
+        stroke="#FFFFFF" stroke-width="56" stroke-linejoin="round" fill="none"/>
+  <!-- 折角翻边 -->
+  <path d="M520 172 V280 H628" stroke="#FFFFFF" stroke-width="56" stroke-linejoin="round" stroke-linecap="round" fill="none"/>
+  <!-- 两条条款文本线 -->
+  <path d="M280 364 H528" stroke="#FFFFFF" stroke-width="48" stroke-linecap="round" fill="none"/>
+  <path d="M280 452 H436" stroke="#FFFFFF" stroke-width="48" stroke-linecap="round" fill="none"/>
+  <!-- 报价 ¥ 徽章：白色实心圆（印章/价格确认），叠于文档右下 -->
+  <circle cx="728" cy="728" r="150" fill="#FFFFFF"/>
+  <!-- 红色 ¥ 符号（V + 竖线 + 两横杠） -->
+  <g stroke="#C0392B" stroke-width="42" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M672 652 L728 726 L784 652"/>
+    <path d="M728 726 V794"/>
+    <path d="M676 686 H780"/>
+    <path d="M676 738 H780"/>
+  </g>
+</svg>
